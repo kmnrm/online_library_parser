@@ -1,5 +1,5 @@
 # Book collection parser
-This program parses a collection of science fiction books of a 
+This program parses a collection of books of a 
 certain genre from [Tululu online library](http://tululu.org/).
 The default genre set is [Science Fiction](http://tululu.org/l55/)
 with code `\l55\`. 
