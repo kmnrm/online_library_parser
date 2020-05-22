@@ -51,19 +51,24 @@ def parse_arguments():
 
 
 def get_last_page_num(category_url):
-    response = requests.get(category_url)
-    response.raise_for_status()
+    response = requests.get(category_url, allow_redirects=False)
+    check_response_status(response)
     soup = BeautifulSoup(response.text, 'lxml')
     last_page_num = soup.select('.npage')[-1].text
     return int(last_page_num)
+
+
+def check_response_status(response):
+    if response.status_code != 200:
+        raise requests.HTTPError
 
 
 def fetch_books_urls(category_url, start_page, end_page):
     books_urls = []
     for page_num in range(start_page, end_page + 1):
         books_list_url = urljoin(category_url, str(page_num))
-        response = requests.get(books_list_url)
-        response.raise_for_status()
+        response = requests.get(books_list_url, allow_redirects=False)
+        check_response_status(response)
         soup = BeautifulSoup(response.text, 'lxml')
         books_from_page_urls = [
             urljoin(
@@ -77,8 +82,8 @@ def fetch_books_urls(category_url, start_page, end_page):
 
 
 def get_book(book_page_url):
-    response = requests.get(book_page_url)
-    response.raise_for_status()
+    response = requests.get(book_page_url, allow_redirects=False)
+    check_response_status(response)
     if response.url != TULULU_URL:
         soup = BeautifulSoup(response.text, 'lxml')
         book_href = soup.select('.d_book tr a')[-3]['href']
@@ -115,8 +120,8 @@ def get_book(book_page_url):
 
 
 def download_txt(url, filename, folder=BOOKS_FOLDER):
-    response = requests.get(url)
-    response.raise_for_status()
+    response = requests.get(url, allow_redirects=False)
+    check_response_status(response)
     if response.url != TULULU_URL:
         filename += '.txt'
         file_path = os.path.join(folder, sanitize_filename(filename))
@@ -126,8 +131,8 @@ def download_txt(url, filename, folder=BOOKS_FOLDER):
 
 
 def download_image(url, folder=IMAGES_FOLDER):
-    response = requests.get(url)
-    response.raise_for_status()
+    response = requests.get(url, allow_redirects=False)
+    check_response_status(response)
     if response.url != TULULU_URL:
         filename = url.split('/')[-1]
         file_path = os.path.join(folder, filename)
