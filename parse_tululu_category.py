@@ -6,9 +6,10 @@ from urllib.parse import urljoin
 from bs4 import BeautifulSoup
 from pathvalidate import sanitize_filename
 
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 TULULU_URL = 'http://tululu.org/'
-IMAGES_FOLDER = 'images/'
-BOOKS_FOLDER = 'books/'
+IMAGES_FOLDER = os.path.join(ROOT_DIR, 'images')
+BOOKS_FOLDER = os.path.join(ROOT_DIR, 'books')
 DESCRIPTION = 'This program parses a collection of books of a certain genre from Tululu online library. '\
                   'You can download books in txt format and books covers images. '\
                   'The program generates a json format file with downloaded books data such as: '\
@@ -64,13 +65,13 @@ def fetch_books_urls(category_url, start_page, end_page):
         response = requests.get(books_list_url)
         response.raise_for_status()
         soup = BeautifulSoup(response.text, 'lxml')
-        books_from_page_urls = list(
+        books_from_page_urls = [
             urljoin(
                 TULULU_URL,
                 tag.find('a')['href']
                 )
             for tag in soup.find_all('table', class_='d_book')
-        )
+        ]
         books_urls += books_from_page_urls
     return books_urls
 
@@ -94,14 +95,14 @@ def get_book(book_page_url):
             TULULU_URL,
             soup.select_one('.bookimage img')['src']
         )
-        genres = list(
+        genres = [
             genres_tag.text
             for genres_tag in soup.select('span.d_book a')
-        )
-        comments = list(
+        ]
+        comments = [
             comments_tag.select_one('.black').text
             for comments_tag in soup.select('.texts')
-        )
+        ]
         book = {
             'title': title,
             'author': author,
