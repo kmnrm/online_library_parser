@@ -1,3 +1,5 @@
+from __future__ import print_function
+import sys
 import os
 import json
 import argparse
@@ -141,13 +143,28 @@ def download_image(url, folder=IMAGES_FOLDER):
         return file_path
 
 
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
+
+
+def check_page_arguments(start_page, end_page, collection_last_page):
+    if start_page > end_page:
+        eprint('Start page may not be greater than end page.')
+        sys.exit()
+    if end_page > collection_last_page or start_page > collection_last_page:
+        eprint(f'Page argument can not be greater than the last page of the collection: {collection_last_page}')
+        sys.exit()
+
+
 def main():
     science_fiction_collection_url = f"{TULULU_URL}l55/"
+    collection_last_page = get_last_page_num(science_fiction_collection_url)
     args = parse_arguments()
     start_page = args.start_page
     end_page = args.end_page
     if end_page is None:
-        end_page = get_last_page_num(science_fiction_collection_url)
+        end_page = collection_last_page
+    check_page_arguments(start_page, end_page, collection_last_page)
 
     if args.dest_folder is not None:
         os.chdir(args.dest_folder)
