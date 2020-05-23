@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 from pathvalidate import sanitize_filename
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-TULULU_URL = 'http://tululu.org/'
+TULULU_URL = 'http://tululu.org'
 IMAGES_FOLDER = os.path.join(ROOT_DIR, 'images')
 BOOKS_FOLDER = os.path.join(ROOT_DIR, 'books')
 DESCRIPTION = 'This program parses a collection of books of a certain genre from Tululu online library. '\
@@ -157,7 +157,7 @@ def check_page_arguments(start_page, end_page, collection_last_page):
 
 
 def main():
-    science_fiction_collection_url = f"{TULULU_URL}l55/"
+    science_fiction_collection_url = urljoin(TULULU_URL, 'l55/')
     collection_last_page = get_last_page_num(science_fiction_collection_url)
     args = parse_arguments()
     start_page = args.start_page
