@@ -3,11 +3,17 @@ import sys
 import os
 import time
 import json
+import logging
 import argparse
 import requests
 from urllib.parse import urljoin
 from bs4 import BeautifulSoup
 from pathvalidate import sanitize_filename
+
+logging.basicConfig(
+    format='%(asctime)s %(levelname)s %(message)s',
+    level=logging.INFO,
+    )
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 TULULU_URL = 'http://tululu.org'
@@ -55,15 +61,17 @@ def parse_arguments():
 
 def get_last_page_num(category_url):
     response = requests.get(category_url, allow_redirects=False)
-    check_response_status(response)
+    check_response_status(response, request_in=get_last_page_num.__name__)
     soup = BeautifulSoup(response.text, 'lxml')
     last_page_num = soup.select('.npage')[-1].text
     return int(last_page_num)
 
 
-def check_response_status(response):
+def check_response_status(response, request_in):
     if response.status_code != 200:
-        raise requests.HTTPError
+        eprint('Response status code is not 200.')
+        logging.error(f'{requests.HTTPError.__name__} occurred in {request_in}().')
+        sys.exit()
 
 
 def fetch_books_urls(category_url, start_page, end_page):
@@ -71,7 +79,7 @@ def fetch_books_urls(category_url, start_page, end_page):
     for page_num in range(start_page, end_page + 1):
         books_list_url = urljoin(category_url, str(page_num))
         response = requests.get(books_list_url, allow_redirects=False)
-        check_response_status(response)
+        check_response_status(response, request_in=fetch_books_urls.__name__)
         soup = BeautifulSoup(response.text, 'lxml')
         books_from_page_urls = [
             urljoin(
@@ -86,7 +94,7 @@ def fetch_books_urls(category_url, start_page, end_page):
 
 def get_book(book_page_url):
     response = requests.get(book_page_url, allow_redirects=False)
-    check_response_status(response)
+    check_response_status(response, request_in=get_book.__name__)
     if response.url != TULULU_URL:
         soup = BeautifulSoup(response.text, 'lxml')
         book_href = soup.select('.d_book tr a')[-3]['href']
@@ -124,7 +132,7 @@ def get_book(book_page_url):
 
 def download_txt(url, filename, folder=BOOKS_FOLDER):
     response = requests.get(url, allow_redirects=False)
-    check_response_status(response)
+    check_response_status(response, request_in=download_txt.__name__)
     if response.url == TULULU_URL:
         return
     timestamp = int(time.time())
@@ -137,7 +145,7 @@ def download_txt(url, filename, folder=BOOKS_FOLDER):
 
 def download_image(url, folder=IMAGES_FOLDER):
     response = requests.get(url, allow_redirects=False)
-    check_response_status(response)
+    check_response_status(response, request_in=download_image.__name__)
     if response.url == TULULU_URL:
         return
     filename = url.split('/')[-1].split('.')
@@ -186,6 +194,7 @@ def main():
     for book_url in books_urls:
         book = get_book(book_url)
         if book is None:
+            logging.warning(f'The book with URL {book_url} can not be downloaded.')
             continue
         book_title = book['title']
         image_url = book['image_src']
@@ -199,11 +208,14 @@ def main():
         else:
             del book['book_path']
         books.append(book)
+        logging.info(f'The book "{book_title}" with URL {book_url} has been downloaded.')
 
     if args.json_path is not None:
         os.chdir(args.json_path)
     with open('books.json', 'w', encoding='utf8') as downloaded_books:
         json.dump(books, downloaded_books, ensure_ascii=False)
+    json_dir = os.path.dirname(os.path.abspath(__file__))
+    logging.info(f'The JSON-file has been created and added to {json_dir} directory.')
 
 
 if __name__ == "__main__":
