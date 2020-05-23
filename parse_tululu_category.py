@@ -168,8 +168,10 @@ def main():
 
     if args.dest_folder is not None:
         os.chdir(args.dest_folder)
-    os.makedirs(IMAGES_FOLDER, exist_ok=True)
-    os.makedirs(BOOKS_FOLDER, exist_ok=True)
+    if not args.skip_img:
+        os.makedirs(IMAGES_FOLDER, exist_ok=True)
+    if not args.skip_txt:
+        os.makedirs(BOOKS_FOLDER, exist_ok=True)
 
     books = []
     books_urls = fetch_books_urls(science_fiction_collection_url, start_page, end_page)
