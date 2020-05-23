@@ -124,23 +124,25 @@ def get_book(book_page_url):
 def download_txt(url, filename, folder=BOOKS_FOLDER):
     response = requests.get(url, allow_redirects=False)
     check_response_status(response)
-    if response.url != TULULU_URL:
-        filename += '.txt'
-        file_path = os.path.join(folder, sanitize_filename(filename))
-        with open(file_path, 'wb') as file:
-            file.write(response.content)
-        return file_path
+    if response.url == TULULU_URL:
+        return
+    filename += '.txt'
+    file_path = os.path.join(folder, sanitize_filename(filename))
+    with open(file_path, 'wb') as file:
+        file.write(response.content)
+    return file_path
 
 
 def download_image(url, folder=IMAGES_FOLDER):
     response = requests.get(url, allow_redirects=False)
     check_response_status(response)
-    if response.url != TULULU_URL:
-        filename = url.split('/')[-1]
-        file_path = os.path.join(folder, filename)
-        with open(file_path, 'wb') as file:
-            file.write(response.content)
-        return file_path
+    if response.url == TULULU_URL:
+        return
+    filename = url.split('/')[-1]
+    file_path = os.path.join(folder, filename)
+    with open(file_path, 'wb') as file:
+        file.write(response.content)
+    return file_path
 
 
 def eprint(*args, **kwargs):
