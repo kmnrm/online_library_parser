@@ -1,14 +1,12 @@
 from __future__ import print_function
-import sys
 import os
-import time
 import json
 import logging
 import argparse
-import requests
 from urllib.parse import urljoin
-from bs4 import BeautifulSoup
-from pathvalidate import sanitize_filename
+from utils import get_last_page_num, check_page_arguments
+from tululu_books import fetch_books_urls, get_book
+from downloaders import download_txt, download_image
 
 logging.basicConfig(
     format='%(asctime)s %(levelname)s %(message)s',
@@ -59,119 +57,6 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def get_last_page_num(category_url):
-    response = requests.get(category_url, allow_redirects=False)
-    check_response_status(response, request_in=get_last_page_num.__name__)
-    soup = BeautifulSoup(response.text, 'lxml')
-    last_page_num = soup.select('.npage')[-1].text
-    return int(last_page_num)
-
-
-def check_response_status(response, request_in):
-    if response.status_code != 200:
-        eprint('Response status code is not 200.')
-        logging.error(f'{requests.HTTPError.__name__} occurred in {request_in}().')
-        sys.exit()
-
-
-def fetch_books_urls(category_url, start_page, end_page):
-    books_urls = []
-    for page_num in range(start_page, end_page + 1):
-        books_list_url = urljoin(category_url, str(page_num))
-        response = requests.get(books_list_url, allow_redirects=False)
-        check_response_status(response, request_in=fetch_books_urls.__name__)
-        soup = BeautifulSoup(response.text, 'lxml')
-        books_from_page_urls = [
-            urljoin(
-                TULULU_URL,
-                tag.find('a')['href']
-                )
-            for tag in soup.find_all('table', class_='d_book')
-        ]
-        books_urls += books_from_page_urls
-    return books_urls
-
-
-def get_book(book_page_url):
-    response = requests.get(book_page_url, allow_redirects=False)
-    check_response_status(response, request_in=get_book.__name__)
-    if response.url != TULULU_URL:
-        soup = BeautifulSoup(response.text, 'lxml')
-        book_href = soup.select('.d_book tr a')[-3]['href']
-        if 'txt.php' not in book_href:
-            return None
-        book_href = urljoin(
-            TULULU_URL,
-            book_href
-        )
-        book_name = soup.find('h1').text
-        title = book_name.split('\xa0')[0].strip()
-        author = book_name.split('\xa0')[2].strip()
-        image_src = urljoin(
-            TULULU_URL,
-            soup.select_one('.bookimage img')['src']
-        )
-        genres = [
-            genres_tag.text
-            for genres_tag in soup.select('span.d_book a')
-        ]
-        comments = [
-            comments_tag.select_one('.black').text
-            for comments_tag in soup.select('.texts')
-        ]
-        book = {
-            'title': title,
-            'author': author,
-            'comments': comments,
-            'genres': genres,
-            'image_src': image_src,
-            'book_path': book_href,
-        }
-        return book
-
-
-def download_txt(url, filename, folder=BOOKS_FOLDER):
-    response = requests.get(url, allow_redirects=False)
-    check_response_status(response, request_in=download_txt.__name__)
-    if response.url == TULULU_URL:
-        return
-    timestamp = int(time.time())
-    filename = '_'.join([filename, str(timestamp), '.txt'])
-    file_path = os.path.join(folder, sanitize_filename(filename))
-    with open(file_path, 'wb') as file:
-        file.write(response.content)
-    return file_path
-
-
-def download_image(url, folder=IMAGES_FOLDER):
-    response = requests.get(url, allow_redirects=False)
-    check_response_status(response, request_in=download_image.__name__)
-    if response.url == TULULU_URL:
-        return
-    filename = url.split('/')[-1].split('.')
-    timestamp = int(time.time())
-    filename_without_format = '_'.join([filename[0], str(timestamp)])
-    filename_format = filename[-1]
-    filename = '.'.join([filename_without_format, filename_format])
-    file_path = os.path.join(folder, filename)
-    with open(file_path, 'wb') as file:
-        file.write(response.content)
-    return file_path
-
-
-def eprint(*args, **kwargs):
-    print(*args, file=sys.stderr, **kwargs)
-
-
-def check_page_arguments(start_page, end_page, collection_last_page):
-    if start_page > end_page:
-        eprint('Start page may not be greater than end page.')
-        sys.exit()
-    if end_page > collection_last_page or start_page > collection_last_page:
-        eprint(f'Page argument can not be greater than the last page of the collection: {collection_last_page}')
-        sys.exit()
-
-
 def main():
     science_fiction_collection_url = urljoin(TULULU_URL, 'l55/')
     collection_last_page = get_last_page_num(science_fiction_collection_url)
@@ -191,6 +76,7 @@ def main():
 
     books = []
     books_urls = fetch_books_urls(science_fiction_collection_url, start_page, end_page)
+
     for book_url in books_urls:
         book = get_book(book_url)
         if book is None:
@@ -209,6 +95,7 @@ def main():
             del book['book_path']
         books.append(book)
         logging.info(f'The book "{book_title}" with URL {book_url} has been downloaded.')
+
 
     if args.json_path is not None:
         os.chdir(args.json_path)
