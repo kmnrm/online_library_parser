@@ -3,6 +3,7 @@ import os
 import json
 import logging
 import argparse
+from time import sleep
 from urllib.parse import urljoin
 from utils import get_last_page_num, check_page_arguments
 from tululu_books import fetch_books_urls, get_book
@@ -35,7 +36,6 @@ def dir_path(path):
 
 
 def parse_arguments():
-
     parser = argparse.ArgumentParser(description=DESCRIPTION)
     parser.add_argument('--start_page', type=int, nargs='?', default=1,
                         help='The first page to parse.'
@@ -76,26 +76,31 @@ def main():
 
     books = []
     books_urls = fetch_books_urls(science_fiction_collection_url, start_page, end_page)
-
     for book_url in books_urls:
-        book = get_book(book_url)
-        if book is None:
-            logging.warning(f'The book with URL {book_url} can not be downloaded.')
-            continue
-        book_title = book['title']
-        image_url = book['image_src']
-        book_download_url = book['book_path']
-        if not args.skip_img:
-            book['image_src'] = download_image(image_url, folder=IMAGES_FOLDER)
-        else:
-            del book['image_src']
-        if not args.skip_txt:
-            book['book_path'] = download_txt(book_download_url, book_title, folder=BOOKS_FOLDER)
-        else:
-            del book['book_path']
-        books.append(book)
-        logging.info(f'The book "{book_title}" with URL {book_url} has been downloaded.')
+        while True:
+            try:
+                book = get_book(book_url)
+                if book is not None:
+                    book_title = book['title']
+                    image_url = book['image_src']
+                    book_download_url = book['book_path']
+                    if not args.skip_img:
+                        book['image_src'] = download_image(image_url, folder=IMAGES_FOLDER)
+                    else:
+                        del book['image_src']
+                    if not args.skip_txt:
+                        book['book_path'] = download_txt(book_download_url, book_title, folder=BOOKS_FOLDER)
+                    else:
+                        del book['book_path']
+                    books.append(book)
+                    logging.info(f'The book "{book_title}" with URL {book_url} has been downloaded.')
+                else:
+                    logging.warning(f'The book with URL {book_url} can not be downloaded.')
+                break
 
+            except Exception as e:
+                logging.error(e)
+                sleep(10)
 
     if args.json_path is not None:
         os.chdir(args.json_path)

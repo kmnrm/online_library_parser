@@ -2,14 +2,13 @@ import os
 import time
 import requests
 from pathvalidate import sanitize_filename
-from utils import check_response_status
 
 TULULU_URL = 'http://tululu.org'
 
 
 def download_txt(url, filename, folder):
     response = requests.get(url, allow_redirects=False)
-    check_response_status(response, request_in=download_txt.__name__)
+    response.raise_for_status()
     if response.url == TULULU_URL:
         return
     timestamp = int(time.time())
@@ -22,7 +21,7 @@ def download_txt(url, filename, folder):
 
 def download_image(url, folder):
     response = requests.get(url, allow_redirects=False)
-    check_response_status(response, request_in=download_image.__name__)
+    response.raise_for_status()
     if response.url == TULULU_URL:
         return
     filename = url.split('/')[-1].split('.')
