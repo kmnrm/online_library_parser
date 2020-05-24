@@ -47,7 +47,7 @@ generated `books.json` file only.
 
 ### How to use
 Install Python3 to use this program.
-1. Download `parse_tululu_category.py` script.
+1. Download project scripts.
 2. Then use pip (or pip3, if there is a conflict with Python2) to install dependencies:
     ```commandline
     pip install -r requirements.txt
