@@ -31,7 +31,7 @@ def get_book(category_url, book_page_url):
     soup = BeautifulSoup(response.text, 'lxml')
     book_href = soup.select('.d_book tr a')[-3]['href']
     if 'txt.php' not in book_href:
-        return None
+        return
     book_href = urljoin(
         category_url,
         book_href

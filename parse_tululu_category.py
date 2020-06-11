@@ -63,11 +63,11 @@ def main():
     args = parse_arguments()
     start_page = args.start_page
     end_page = args.end_page
-    if end_page is None:
+    if not end_page:
         end_page = collection_last_page
     check_page_arguments(start_page, end_page, collection_last_page)
 
-    if args.dest_folder is not None:
+    if args.dest_folder:
         os.chdir(args.dest_folder)
 
     images_folder = os.path.join(os.getcwd(), IMAGES_FOLDER_NAME)
@@ -84,22 +84,22 @@ def main():
         for attempt in range(1, 5):
             try:
                 book = get_book(science_fiction_collection_url, book_url)
-                if book is not None:
-                    book_title = book['title']
-                    image_url = book['image_src']
-                    book_download_url = book['book_path']
-                    if not args.skip_img:
-                        book['image_src'] = download_image(image_url, folder=images_folder)
-                    else:
-                        del book['image_src']
-                    if not args.skip_txt:
-                        book['book_path'] = download_txt(book_download_url, book_title, folder=books_folder)
-                    else:
-                        del book['book_path']
-                    books.append(book)
-                    logging.info(f'The book "{book_title}" with URL {book_url} has been downloaded.')
-                else:
+                if not book:
                     logging.warning(f'The book with URL {book_url} can not be downloaded.')
+                    break
+                book_title = book['title']
+                image_url = book['image_src']
+                book_download_url = book['book_path']
+                if not args.skip_img:
+                    book['image_src'] = download_image(image_url, folder=images_folder)
+                else:
+                    del book['image_src']
+                if not args.skip_txt:
+                    book['book_path'] = download_txt(book_download_url, book_title, folder=books_folder)
+                else:
+                    del book['book_path']
+                books.append(book)
+                logging.info(f'The book "{book_title}" with URL {book_url} has been downloaded.')
                 break
             except Exception as e:
                 if attempt > 3:
@@ -109,7 +109,7 @@ def main():
                 logging.warning(f'Reconnection attempt {attempt}/3 in 10 seconds.')
                 sleep(10)
 
-    if args.json_path is not None:
+    if args.json_path:
         os.chdir(args.json_path)
     with open('books.json', 'w', encoding='utf8') as downloaded_books:
         json.dump(books, downloaded_books, ensure_ascii=False)
