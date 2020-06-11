@@ -79,7 +79,7 @@ def main():
     for book_url in books_urls:
         while True:
             try:
-                book = get_book(book_url)
+                book = get_book(science_fiction_collection_url, book_url)
                 if book is not None:
                     book_title = book['title']
                     image_url = book['image_src']

@@ -15,7 +15,7 @@ def fetch_books_urls(category_url, start_page, end_page):
         soup = BeautifulSoup(response.text, 'lxml')
         books_from_page_urls = [
             urljoin(
-                TULULU_URL,
+                category_url,
                 tag.find('a')['href']
                 )
             for tag in soup.find_all('table', class_='d_book')
@@ -24,7 +24,7 @@ def fetch_books_urls(category_url, start_page, end_page):
     return books_urls
 
 
-def get_book(book_page_url):
+def get_book(category_url, book_page_url):
     response = requests.get(book_page_url)
     if response.url == TULULU_URL or response.status_code != 200:
         return
@@ -33,14 +33,14 @@ def get_book(book_page_url):
     if 'txt.php' not in book_href:
         return None
     book_href = urljoin(
-        TULULU_URL,
+        category_url,
         book_href
     )
     book_name = soup.find('h1').text
     title = book_name.split('\xa0')[0].strip()
     author = book_name.split('\xa0')[2].strip()
     image_src = urljoin(
-        TULULU_URL,
+        category_url,
         soup.select_one('.bookimage img')['src']
     )
     genres = [
