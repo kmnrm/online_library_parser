@@ -90,14 +90,12 @@ def main():
                 book_title = book['title']
                 image_url = book['image_src']
                 book_download_url = book['book_path']
+                book['image_src'] = None
+                book['book_path'] = None
                 if not args.skip_img:
                     book['image_src'] = download_image(image_url, folder=images_folder)
-                else:
-                    del book['image_src']
                 if not args.skip_txt:
                     book['book_path'] = download_txt(book_download_url, book_title, folder=books_folder)
-                else:
-                    del book['book_path']
                 books.append(book)
                 logging.info(f'The book "{book_title}" with URL {book_url} has been downloaded.')
                 break
