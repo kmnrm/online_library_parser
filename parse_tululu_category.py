@@ -3,9 +3,10 @@ import os
 import json
 import logging
 import argparse
+import sys
 from time import sleep
 from urllib.parse import urljoin
-from utils import get_last_page_num, check_page_arguments
+from utils import get_last_page_num, check_page_arguments, eprint
 from tululu_books import fetch_books_urls, get_book
 from downloaders import download_txt, download_image
 
@@ -77,7 +78,7 @@ def main():
     books = []
     books_urls = fetch_books_urls(science_fiction_collection_url, start_page, end_page)
     for book_url in books_urls:
-        while True:
+        for attempt in range(1, 5):
             try:
                 book = get_book(science_fiction_collection_url, book_url)
                 if book is not None:
@@ -97,9 +98,12 @@ def main():
                 else:
                     logging.warning(f'The book with URL {book_url} can not be downloaded.')
                 break
-
             except Exception as e:
+                if attempt > 3:
+                    eprint('Max reconnection attempts exceeded. Check your connection settings.')
+                    sys.exit()
                 logging.error(e)
+                logging.warning(f'Reconnection attempt {attempt}/3 in 10 seconds.')
                 sleep(10)
 
     if args.json_path is not None:
