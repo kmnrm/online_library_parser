@@ -15,10 +15,9 @@ logging.basicConfig(
     level=logging.INFO,
     )
 
-ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 TULULU_URL = 'http://tululu.org'
-IMAGES_FOLDER = os.path.join(ROOT_DIR, 'images')
-BOOKS_FOLDER = os.path.join(ROOT_DIR, 'books')
+IMAGES_FOLDER_NAME = 'images'
+BOOKS_FOLDER_NAME = 'books'
 DESCRIPTION = 'This program parses a collection of books of a certain genre from Tululu online library. '\
                   'You can download books in txt format and books covers images. '\
                   'The program generates a json format file with downloaded books data such as: '\
@@ -70,10 +69,14 @@ def main():
 
     if args.dest_folder is not None:
         os.chdir(args.dest_folder)
+
+    images_folder = os.path.join(os.getcwd(), IMAGES_FOLDER_NAME)
+    books_folder = os.path.join(os.getcwd(), BOOKS_FOLDER_NAME)
+
     if not args.skip_img:
-        os.makedirs(IMAGES_FOLDER, exist_ok=True)
+        os.makedirs(images_folder, exist_ok=True)
     if not args.skip_txt:
-        os.makedirs(BOOKS_FOLDER, exist_ok=True)
+        os.makedirs(books_folder, exist_ok=True)
 
     books = []
     books_urls = fetch_books_urls(science_fiction_collection_url, start_page, end_page)
@@ -86,11 +89,11 @@ def main():
                     image_url = book['image_src']
                     book_download_url = book['book_path']
                     if not args.skip_img:
-                        book['image_src'] = download_image(image_url, folder=IMAGES_FOLDER)
+                        book['image_src'] = download_image(image_url, folder=images_folder)
                     else:
                         del book['image_src']
                     if not args.skip_txt:
-                        book['book_path'] = download_txt(book_download_url, book_title, folder=BOOKS_FOLDER)
+                        book['book_path'] = download_txt(book_download_url, book_title, folder=books_folder)
                     else:
                         del book['book_path']
                     books.append(book)
